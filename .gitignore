@@ -1,0 +1,5 @@
+*.exe
+*.out
+*.o
+*.obj
+*.code-workspace
