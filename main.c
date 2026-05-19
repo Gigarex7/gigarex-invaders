@@ -9,6 +9,10 @@ Copyright (C) 2026 Gigarex7
 #include "game.h"
 
 int main(){
-    kindness();
+    Player player;
+    // bottom middle initial position
+    player.x=WIDTH/2;
+    player.y=HEIGHT-2;
+    drawScreen(player);
     return 0;
 }

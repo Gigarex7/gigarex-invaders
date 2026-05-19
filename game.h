@@ -2,6 +2,15 @@
 #ifndef GAME_H
 #define GAME_H
 
-void kindness();
+// Screen
+#define WIDTH 40
+#define HEIGHT 20
+
+typedef struct{
+    int x;
+    int y;
+}Player;
+
+void drawScreen(Player player);
 
 #endif
