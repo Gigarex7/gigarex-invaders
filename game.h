@@ -11,6 +11,14 @@ typedef struct{
     int y;
 }Player;
 
-void drawScreen(Player player);
+typedef struct PlayerProjectile{
+    int x;
+    int y;
+    struct PlayerProjectile *next;
+}PlayerProjectile;
+
+void shootPlayer(PlayerProjectile **shots, Player player);
+void moveProjectiles(PlayerProjectile **shots);
+void drawScreen(Player player, PlayerProjectile *shots);
 
 #endif

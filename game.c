@@ -3,23 +3,68 @@
 #include <stdlib.h>
 #include "game.h"
 
-void drawScreen(Player player){
+void shootPlayer(PlayerProjectile **shots, Player player){
+    PlayerProjectile *newProjectile=malloc(sizeof(PlayerProjectile));
+    newProjectile->x=player.x;
+    newProjectile->y=(player.y-1);
+    newProjectile->next=*shots;
+    *shots=newProjectile;
+}
+
+void moveProjectiles(PlayerProjectile **shots){
+    PlayerProjectile *current=*shots;
+    PlayerProjectile *previous=NULL;
+    while(current!=NULL){
+        current->y--;
+        if((current->y) <= (0)){
+            if(previous==NULL){
+                *shots=(current->next);
+            }else{
+                (previous->next) = (current->next);
+            }
+            PlayerProjectile* temp=current;
+            current=(current->next);
+            free(temp);
+        }else{
+            previous=current;
+            current=(current->next);
+        }
+    }
+}
+
+void drawScreen(Player player, PlayerProjectile *shots){
     char screen[HEIGHT][WIDTH];
-    printf("\033[J"); // ANSI-CSI: move cursor to top left corner
-    printf("\033[H"); // ANSI-CSI: clear screen
+    printf("\033[J"); // ANSI-CSI: clear screen
+    printf("\033[H"); // ANSI-CSI: move cursor to top left corner
+    // Initial screen filled with spaces
+    for(int y=0; y<HEIGHT; y++){
+        for(int x=0; x<WIDTH; x++){
+            screen[y][x]=' ';
+        }
+    }
+    // Borders drawn over spaces
     for(int y=0; y<HEIGHT; y++){
         for(int x=0; x<WIDTH; x++){
             if((y==0 && x==0) || (y==HEIGHT-1 && x==0) || (y==0 && x==WIDTH-1) || (y==HEIGHT-1 && x==WIDTH-1)){
                 screen[y][x]='+';
-            }else if(y==HEIGHT-1 || y==0){
+            }else if(y==0 || y==HEIGHT-1){
                 screen[y][x]='-';
-            }else if(x==WIDTH-1 || x==0){
+            }else if(x==0 || x==WIDTH-1){
                 screen[y][x]='|';
-            }else if(x==player.x && y==player.y){
-                screen[y][x]='^';
-            }else{
-                screen[y][x]=' ';
             }
+        }
+    }
+    // Player drawn over spaces
+    screen[player.y][player.x]='^';
+    // Projectiles drawn over spaces
+    PlayerProjectile *current=shots;
+    while(current!=NULL){
+        screen[current->y][current->x]='.';
+        current=(current->next);
+    }
+    // Print complete frame
+    for(int y=0; y<HEIGHT; y++){
+        for(int x=0; x<WIDTH; x++){
             printf("%c", screen[y][x]);
         }
         printf("\n");

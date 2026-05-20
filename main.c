@@ -10,6 +10,7 @@ Copyright (C) 2026 Gigarex7
 
 int main(){
     Player player;
+    PlayerProjectile *shots=NULL;
     // bottom middle initial position
     player.x=WIDTH/2;
     player.y=HEIGHT-2;
@@ -17,7 +18,8 @@ int main(){
     int running=1;
     system("cls");
     while(running){ // whatever will I do with all the time I saved by not writing it "==1"
-        drawScreen(player);
+        moveProjectiles(&shots);
+        drawScreen(player, shots);
         char input; // note that making the program not require an Enter press after each input is advanced
         scanf(" %c", &input); // the space in " %c" ignores the newline, there's a lot of newline
         // Left
@@ -27,6 +29,10 @@ int main(){
         // Right
         if((input=='d' || input=='D') && (player.x < (WIDTH-2))){
             player.x++;
+        }
+        // Shoot
+        if((input=='s' || input=='S')){
+            shootPlayer(&shots, player);
         }
         // Quit
         if(input=='q' || input=='Q'){
