@@ -15,6 +15,7 @@ int main(){
     player.y=HEIGHT-2;
     // Game Loop
     int running=1;
+    system("cls");
     while(running){ // whatever will I do with all the time I saved by not writing it "==1"
         drawScreen(player);
         char input; // note that making the program not require an Enter press after each input is advanced

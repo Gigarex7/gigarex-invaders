@@ -4,20 +4,23 @@
 #include "game.h"
 
 void drawScreen(Player player){
-    system("cls"); // janky refresh
+    char screen[HEIGHT][WIDTH];
+    printf("\033[J"); // ANSI-CSI: move cursor to top left corner
+    printf("\033[H"); // ANSI-CSI: clear screen
     for(int y=0; y<HEIGHT; y++){
         for(int x=0; x<WIDTH; x++){
             if((y==0 && x==0) || (y==HEIGHT-1 && x==0) || (y==0 && x==WIDTH-1) || (y==HEIGHT-1 && x==WIDTH-1)){
-                printf("+");
+                screen[y][x]='+';
             }else if(y==HEIGHT-1 || y==0){
-                printf("-");
+                screen[y][x]='-';
             }else if(x==WIDTH-1 || x==0){
-                printf("|");
+                screen[y][x]='|';
             }else if(x==player.x && y==player.y){
-                printf("^");
+                screen[y][x]='^';
             }else{
-                printf(" ");
+                screen[y][x]=' ';
             }
+            printf("%c", screen[y][x]);
         }
         printf("\n");
     }
