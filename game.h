@@ -17,8 +17,19 @@ typedef struct PlayerProjectile{
     struct PlayerProjectile *next;
 }PlayerProjectile;
 
+typedef enum{
+    ENEMY_NONE, ENEMY_WEAK, ENEMY_NORMAL, ENEMY_STRONG
+}EnemyType;
+
+typedef struct{
+    EnemyType type;
+    int points;
+    int active;
+}Enemy;
+
+void initializeLevel(Enemy **enemies, int enemyRows, int enemyCols);
 void shootPlayer(PlayerProjectile **shots, Player player);
 void moveProjectiles(PlayerProjectile **shots);
-void drawScreen(Player player, PlayerProjectile *shots);
+void drawScreen(Player player, PlayerProjectile *shots, Enemy** enemies, int enemyRows, int enemyCols);
 
 #endif

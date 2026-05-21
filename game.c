@@ -3,6 +3,16 @@
 #include <stdlib.h>
 #include "game.h"
 
+void initializeLevel(Enemy **enemies, int enemyRows, int enemyCols){
+    for(int y=0; y<enemyRows; y++){
+        for(int x=0; x<enemyCols; x++){
+            enemies[y][x].type=ENEMY_NORMAL;
+            enemies[y][x].points=100;
+            enemies[y][x].active=1;
+        }
+    }
+}
+
 void shootPlayer(PlayerProjectile **shots, Player player){
     PlayerProjectile *newProjectile=malloc(sizeof(PlayerProjectile));
     newProjectile->x=player.x;
@@ -32,7 +42,7 @@ void moveProjectiles(PlayerProjectile **shots){
     }
 }
 
-void drawScreen(Player player, PlayerProjectile *shots){
+void drawScreen(Player player, PlayerProjectile *shots, Enemy** enemies, int enemyRows, int enemyCols){
     char screen[HEIGHT][WIDTH];
     printf("\033[J"); // ANSI-CSI: clear screen
     printf("\033[H"); // ANSI-CSI: move cursor to top left corner
@@ -62,6 +72,17 @@ void drawScreen(Player player, PlayerProjectile *shots){
         screen[current->y][current->x]='.';
         current=(current->next);
     }
+    /* WORK IN PROGRESS: Enemies drawn over spaces | START */
+    for(int y=0; y<enemyRows; y++){
+        for(int x=0; x<enemyCols; x++){
+            if(enemies[y][x].active){
+                int enemyY=(y+2); // (y+a): vertical margin
+                int enemyX=((x*4)+5); // (x*a)+b: spacing + horizontal margin
+                screen[enemyY][enemyX]='M';
+            }
+        }
+    }
+    /* WORK IN PROGRESS: Enemies drawn over spaces | END */
     // Print complete frame
     for(int y=0; y<HEIGHT; y++){
         for(int x=0; x<WIDTH; x++){

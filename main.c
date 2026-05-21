@@ -10,18 +10,27 @@ Copyright (C) 2026 Gigarex7
 
 int main(){
     Player player;
-    PlayerProjectile *shots=NULL;
-    // bottom middle initial position
     player.x=WIDTH/2;
     player.y=HEIGHT-2;
+    PlayerProjectile *shots=NULL;
+    /* TEMPORARY: Hardcoded Enemies | START */
+    Enemy **enemies;
+    int enemyRows=3;
+    int enemyCols=8;
+    enemies=malloc(enemyRows*sizeof(Enemy*)); // [pointer] [pointer] [pointer]
+    for(int i=0; i<enemyRows; i++){
+        enemies[i]=malloc(enemyCols*sizeof(Enemy)); // [struct] [struct] [struct] [struct]
+    }
+    initializeLevel(enemies, enemyRows, enemyCols);
+    /* TEMPORARY: Hardcoded Enemies | END */
     // Game Loop
     int running=1;
     system("cls");
-    while(running){ // whatever will I do with all the time I saved by not writing it "==1"
+    while(running){ // note that "==1" is superfluous here because running already "=1"
         moveProjectiles(&shots);
-        drawScreen(player, shots);
+        drawScreen(player, shots, enemies, enemyRows, enemyCols);
         char input; // note that making the program not require an Enter press after each input is advanced
-        scanf(" %c", &input); // the space in " %c" ignores the newline, there's a lot of newline
+        scanf(" %c", &input); // note that the space in " %c" ignores the newline, and there's a lot of newline
         // Left
         if((input=='a' || input=='A') && (player.x > 1)){
             player.x--;
@@ -39,12 +48,12 @@ int main(){
             running=0;
         }
     }
-    // End (WIP)
+    // End
+    for(int i=0; i<enemyRows; i++){
+        free(enemies[i]);
+    }
+    free(enemies);
     system("cls");
     printf("EXITING...");
     return 0;
 }
-
-/* I have this idea where "EXITING..." remains at the bottom of the
-screen while all other elements are wiped line by line before the
-program shuts down. Might become part of the cutting room floor. */
