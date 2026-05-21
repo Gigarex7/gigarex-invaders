@@ -10,8 +10,8 @@ Copyright (C) 2026 Gigarex7
 
 int main(){
     Player player;
-    player.x=WIDTH/2;
-    player.y=HEIGHT-2;
+    player.x=WIDTH/2; // middle
+    player.y=HEIGHT-2; // bottom
     PlayerProjectile *shots=NULL;
     /* TEMPORARY: Hardcoded Enemies | START */
     Enemy **enemies;
