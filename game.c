@@ -9,6 +9,8 @@ void initializeLevel(Enemy **enemies, int enemyRows, int enemyCols){
             enemies[y][x].type=ENEMY_NORMAL;
             enemies[y][x].points=100;
             enemies[y][x].active=1;
+            enemies[y][x].exploding=0;
+            enemies[y][x].explosionTimer=0;
         }
     }
 }
@@ -32,7 +34,7 @@ void moveProjectiles(PlayerProjectile **shots){
             }else{
                 (previous->next) = (current->next);
             }
-            PlayerProjectile* temp=current;
+            PlayerProjectile *temp=current;
             current=(current->next);
             free(temp);
         }else{
@@ -42,8 +44,50 @@ void moveProjectiles(PlayerProjectile **shots){
     }
 }
 
-void drawScreen(Player player, PlayerProjectile *shots, Enemy** enemies, int enemyRows, int enemyCols){
+void verifyCollisions(PlayerProjectile **shots, Enemy **enemies, int enemyRows, int enemyCols, int *score){
+    PlayerProjectile *current=*shots;
+    PlayerProjectile *previous=NULL;
+    int screenY=0, screenX=0;
+    while(current!=NULL){
+        int projectileDeleted=0; // nested loops are the enemy of progress I read
+        for(int y=0; y<enemyRows; y++){
+            for(int x=0; x<enemyCols; x++){
+                if(enemies[y][x].active){
+                    screenY=(y+2);
+                    screenX=((x*4)+5);
+                    if(((current->y)==(screenY)) && ((current->x)==(screenX))){
+                        enemies[y][x].exploding=1;
+                        enemies[y][x].explosionTimer=1;
+                        enemies[y][x].active=0;
+                        *score+=enemies[y][x].points;
+                        projectileDeleted=1;
+                        break;
+                    }
+                }
+            }
+            if(projectileDeleted){
+                break;
+            }
+        }
+        if(projectileDeleted){
+            if(previous==NULL){
+                *shots=(current->next);
+            }else{
+                (previous->next) = (current->next);
+            }
+            PlayerProjectile *temp=current;
+            current=(current->next);
+            free(temp);
+        }else{
+            previous=current;
+            current=(current->next);
+        }
+    }
+}
+
+void drawScreen(Player player, PlayerProjectile *shots, Enemy **enemies, int enemyRows, int enemyCols, int score){
     char screen[HEIGHT][WIDTH];
+    int enemyY=0, enemyX=0;
     printf("\033[J"); // ANSI-CSI: clear screen
     printf("\033[H"); // ANSI-CSI: move cursor to top left corner
     // Initial screen filled with spaces
@@ -75,9 +119,13 @@ void drawScreen(Player player, PlayerProjectile *shots, Enemy** enemies, int ene
     /* WORK IN PROGRESS: Enemies drawn over spaces | START */
     for(int y=0; y<enemyRows; y++){
         for(int x=0; x<enemyCols; x++){
-            if(enemies[y][x].active){
-                int enemyY=(y+2); // (y+a): vertical margin
-                int enemyX=((x*4)+5); // (x*a)+b: spacing + horizontal margin
+            if(enemies[y][x].exploding){ // here I don't deactivate the enemy because that's not what this function's role is
+                enemyY=(y+2); // (y+a): vertical margin
+                enemyX=((x*4)+5); // (x*a)+b: spacing + horizontal margin
+                screen[enemyY][enemyX]='*';
+            }else if(enemies[y][x].active){
+                enemyY=(y+2); // (y+a): vertical margin
+                enemyX=((x*4)+5); // (x*a)+b: spacing + horizontal margin
                 screen[enemyY][enemyX]='M';
             }
         }
@@ -89,5 +137,20 @@ void drawScreen(Player player, PlayerProjectile *shots, Enemy** enemies, int ene
             printf("%c", screen[y][x]);
         }
         printf("\n");
+    }
+    printf("SCORE: %d\n", score);
+}
+
+// This function ensures EXPLOSIONS render correctly instead of lingering or disappearing too early
+void updateExplosions(Enemy** enemies, int enemyRows, int enemyCols){
+    for(int y=0; y<enemyRows; y++){
+        for(int x=0; x<enemyCols; x++){
+            if(enemies[y][x].exploding){
+                enemies[y][x].explosionTimer--;
+                if(enemies[y][x].explosionTimer<=0){ // defense of the ancients against bugs, call order, and timing errors
+                    enemies[y][x].exploding=0;
+                }
+            }
+        }
     }
 }

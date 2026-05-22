@@ -13,6 +13,7 @@ int main(){
     player.x=WIDTH/2; // middle
     player.y=HEIGHT-2; // bottom
     PlayerProjectile *shots=NULL;
+    int score=0;
     /* TEMPORARY: Hardcoded Enemies | START */
     Enemy **enemies;
     int enemyRows=3;
@@ -28,7 +29,8 @@ int main(){
     system("cls");
     while(running){ // note that "==1" is superfluous here because running already "=1"
         moveProjectiles(&shots);
-        drawScreen(player, shots, enemies, enemyRows, enemyCols);
+        verifyCollisions(&shots, enemies, enemyRows, enemyCols, &score); // enemies doesn't get an & because I'm not modifying it
+        drawScreen(player, shots, enemies, enemyRows, enemyCols, score);
         char input; // note that making the program not require an Enter press after each input is advanced
         scanf(" %c", &input); // note that the space in " %c" ignores the newline, and there's a lot of newline
         // Left
@@ -47,6 +49,7 @@ int main(){
         if(input=='q' || input=='Q'){
             running=0;
         }
+        updateExplosions(enemies, enemyRows, enemyCols);
     }
     // End
     for(int i=0; i<enemyRows; i++){
