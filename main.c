@@ -10,8 +10,6 @@ Copyright (C) 2026 Gigarex7
 
 int main(){
     Player player;
-    player.x=WIDTH/2; // middle
-    player.y=HEIGHT-2; // bottom
     PlayerProjectile *shots=NULL;
     int score=0;
     /* TEMPORARY: Hardcoded Enemies | START */
@@ -22,7 +20,7 @@ int main(){
     for(int i=0; i<enemyRows; i++){
         enemies[i]=malloc(enemyCols*sizeof(Enemy)); // [struct] [struct] [struct] [struct]
     }
-    initializeLevel(enemies, enemyRows, enemyCols);
+    initializeLevel(&player, enemies, enemyRows, enemyCols);
     /* TEMPORARY: Hardcoded Enemies | END */
     // Game Loop
     int running=1;
@@ -33,22 +31,7 @@ int main(){
         drawScreen(player, shots, enemies, enemyRows, enemyCols, score);
         char input; // note that making the program not require an Enter press after each input is advanced
         scanf(" %c", &input); // note that the space in " %c" ignores the newline, and there's a lot of newline
-        // Left
-        if((input=='a' || input=='A') && (player.x > 1)){
-            player.x--;
-        }
-        // Right
-        if((input=='d' || input=='D') && (player.x < (WIDTH-2))){
-            player.x++;
-        }
-        // Shoot
-        if((input=='s' || input=='S')){
-            shootPlayer(&shots, player);
-        }
-        // Quit
-        if(input=='q' || input=='Q'){
-            running=0;
-        }
+        inputHandling(input, &player, &shots, &running);
         updateExplosions(enemies, enemyRows, enemyCols);
     }
     // End

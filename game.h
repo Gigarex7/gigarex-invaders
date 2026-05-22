@@ -29,11 +29,12 @@ typedef struct{
     int explosionTimer;
 }Enemy;
 
-void initializeLevel(Enemy **enemies, int enemyRows, int enemyCols);
+void initializeLevel(Player *player, Enemy **enemies, int enemyRows, int enemyCols);
 void shootPlayer(PlayerProjectile **shots, Player player);
 void moveProjectiles(PlayerProjectile **shots);
 void verifyCollisions(PlayerProjectile **shots, Enemy **enemies, int enemyRows, int enemyCols, int *score);
 void drawScreen(Player player, PlayerProjectile *shots, Enemy **enemies, int enemyRows, int enemyCols, int score);
-void updateExplosions(Enemy** enemies, int enemyRows, int enemyCols);
+void inputHandling(char input, Player *player, PlayerProjectile **shots, int *running);
+void updateExplosions(Enemy **enemies, int enemyRows, int enemyCols);
 
 #endif

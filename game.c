@@ -3,7 +3,10 @@
 #include <stdlib.h>
 #include "game.h"
 
-void initializeLevel(Enemy **enemies, int enemyRows, int enemyCols){
+void initializeLevel(Player *player, Enemy **enemies, int enemyRows, int enemyCols){
+    player->x=WIDTH/2; // middle
+    player->y=HEIGHT-2; // bottom
+    /* TEMPORARY: Hardcoded Enemies | START */
     for(int y=0; y<enemyRows; y++){
         for(int x=0; x<enemyCols; x++){
             enemies[y][x].type=ENEMY_NORMAL;
@@ -13,6 +16,7 @@ void initializeLevel(Enemy **enemies, int enemyRows, int enemyCols){
             enemies[y][x].explosionTimer=0;
         }
     }
+    /* TEMPORARY: Hardcoded Enemies | END */
 }
 
 void shootPlayer(PlayerProjectile **shots, Player player){
@@ -142,7 +146,7 @@ void drawScreen(Player player, PlayerProjectile *shots, Enemy **enemies, int ene
 }
 
 // This function ensures EXPLOSIONS render correctly instead of lingering or disappearing too early
-void updateExplosions(Enemy** enemies, int enemyRows, int enemyCols){
+void updateExplosions(Enemy **enemies, int enemyRows, int enemyCols){
     for(int y=0; y<enemyRows; y++){
         for(int x=0; x<enemyCols; x++){
             if(enemies[y][x].exploding){
@@ -152,5 +156,24 @@ void updateExplosions(Enemy** enemies, int enemyRows, int enemyCols){
                 }
             }
         }
+    }
+}
+
+void inputHandling(char input, Player *player, PlayerProjectile **shots, int *running){
+    // Left
+    if((input=='a' || input=='A') && ((player->x) > 1)){
+        player->x--;
+    }
+    // Right
+    if((input=='d' || input=='D') && ((player->x) < (WIDTH-2))){
+        player->x++;
+    }
+    // Shoot
+    if((input=='s' || input=='S')){
+        shootPlayer(shots, *player);
+    }
+    // Quit
+    if(input=='q' || input=='Q'){
+        *running=0;
     }
 }
