@@ -19,6 +19,31 @@ void initializeLevel(Player *player, Enemy **enemies, int enemyRows, int enemyCo
     /* TEMPORARY: Hardcoded Enemies | END */
 }
 
+void moveEnemies(Enemy **enemies, int enemyRows, int enemyCols, int *formationX, int *formationY, int *enemyDirection){
+    int hitWall=0;
+    for(int y=0; y<enemyRows; y++){
+        for(int x=0; x<enemyCols; x++){
+            if(enemies[y][x].active){
+                int enemyWallX=(*formationX+(x*4)); // (x*4)=spacing
+                // <= and >= instead of == are defense against bugs, call order errors, and timing errors
+                if((*enemyDirection==1) && ((enemyWallX) >= (WIDTH-2))){ // (WIDTH-2) is the right margin
+                    hitWall=1;
+                }
+                // <= and >= instead of == are defense against bugs, call order errors, and timing errors
+                if((*enemyDirection==-1) && (enemyWallX<=1)){ // (enemyX<=1) is the left margin
+                    hitWall=1;
+                }
+            }
+        }
+    }
+    if(hitWall){
+        *formationY+=1;
+        *enemyDirection*=-1; // multiplying 1 by -1 is perfect for switching between them
+    }else{
+        *formationX+=*enemyDirection;
+    }
+}
+
 void shootPlayer(PlayerProjectile **shots, Player player){
     PlayerProjectile *newProjectile=malloc(sizeof(PlayerProjectile));
     newProjectile->x=player.x;
@@ -48,7 +73,7 @@ void moveProjectiles(PlayerProjectile **shots){
     }
 }
 
-void verifyCollisions(PlayerProjectile **shots, Enemy **enemies, int enemyRows, int enemyCols, int *score){
+void verifyCollisions(PlayerProjectile **shots, Enemy **enemies, int enemyRows, int enemyCols, int formationY, int formationX, int *score){
     PlayerProjectile *current=*shots;
     PlayerProjectile *previous=NULL;
     int screenY=0, screenX=0;
@@ -57,8 +82,8 @@ void verifyCollisions(PlayerProjectile **shots, Enemy **enemies, int enemyRows, 
         for(int y=0; y<enemyRows; y++){
             for(int x=0; x<enemyCols; x++){
                 if(enemies[y][x].active){
-                    screenY=(y+2);
-                    screenX=((x*4)+5);
+                    screenY=(y+formationY); // (y+a): vertical margin (formationY=2)
+                    screenX=((x*4)+formationX); // (x*a)+b: spacing + horizontal margin (formationX=5)
                     if(((current->y)==(screenY)) && ((current->x)==(screenX))){
                         enemies[y][x].exploding=1;
                         enemies[y][x].explosionTimer=1;
@@ -89,7 +114,7 @@ void verifyCollisions(PlayerProjectile **shots, Enemy **enemies, int enemyRows, 
     }
 }
 
-void drawScreen(Player player, PlayerProjectile *shots, Enemy **enemies, int enemyRows, int enemyCols, int score){
+void drawScreen(Player player, PlayerProjectile *shots, Enemy **enemies, int enemyRows, int enemyCols, int formationY, int formationX, int score){
     char screen[HEIGHT][WIDTH];
     int enemyY=0, enemyX=0;
     printf("\033[J"); // ANSI-CSI: clear screen
@@ -124,12 +149,12 @@ void drawScreen(Player player, PlayerProjectile *shots, Enemy **enemies, int ene
     for(int y=0; y<enemyRows; y++){
         for(int x=0; x<enemyCols; x++){
             if(enemies[y][x].exploding){ // here I don't deactivate the enemy because that's not what this function's role is
-                enemyY=(y+2); // (y+a): vertical margin
-                enemyX=((x*4)+5); // (x*a)+b: spacing + horizontal margin
+                enemyY=(y+formationY); // (y+a): vertical margin (formationY=2)
+                enemyX=((x*4)+formationX); // (x*a)+b: spacing + horizontal margin (formationX=5)
                 screen[enemyY][enemyX]='*';
             }else if(enemies[y][x].active){
-                enemyY=(y+2); // (y+a): vertical margin
-                enemyX=((x*4)+5); // (x*a)+b: spacing + horizontal margin
+                enemyY=(y+formationY); // (y+a): vertical margin (formationY=2)
+                enemyX=((x*4)+formationX); // (x*a)+b: spacing + horizontal margin (formationX=5)
                 screen[enemyY][enemyX]='M';
             }
         }
@@ -151,7 +176,7 @@ void updateExplosions(Enemy **enemies, int enemyRows, int enemyCols){
         for(int x=0; x<enemyCols; x++){
             if(enemies[y][x].exploding){
                 enemies[y][x].explosionTimer--;
-                if(enemies[y][x].explosionTimer<=0){ // defense of the ancients against bugs, call order, and timing errors
+                if(enemies[y][x].explosionTimer<=0){ // <= and >= instead of == are defense against bugs, call order errors, and timing errors
                     enemies[y][x].exploding=0;
                 }
             }
