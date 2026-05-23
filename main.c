@@ -6,11 +6,14 @@ Copyright (C) 2026 Gigarex7
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <conio.h> // really old Windows-specific library that enables real-time input and rendering here
+#include <synchapi.h> // allows the game speed to lock itself to a "framerate" through Sleep();
 #include "game.h"
 
 int main(){
     Player player;
     PlayerProjectile *shots=NULL;
+    MovementTimers timers={0}; // I initialized all timers in 0
     int score=0;
     /* TEMPORARY (?): Formation Position | START */
     int formationY=2;
@@ -31,17 +34,29 @@ int main(){
     int running=1;
     system("cls");
     while(running){ // note that "==1" is superfluous here because running already "=1"
-        moveEnemies(enemies, enemyRows, enemyCols, &formationX, &formationY, &enemyDirection);
-        moveProjectiles(&shots);
+        timers.enemyFormation++;
+        // <= and >= instead of == are defense against bugs, call order errors, and timing errors
+        if((timers.enemyFormation)>=10){ // this serves to slow down the game to a playable level
+            moveEnemies(enemies, enemyRows, enemyCols, &formationX, &formationY, &enemyDirection, &timers);
+            timers.enemyFormation=0;
+        }
+        timers.shotFrameskip++;
+        // <= and >= instead of == are defense against bugs, call order errors, and timing errors
+        if((timers.shotFrameskip)>=2){ // this serves to fix ghosting
+            moveProjectiles(&shots);
+            timers.shotFrameskip=0;
+        }
         verifyCollisions(&shots, enemies, enemyRows, enemyCols, formationY, formationX, &score); // enemies doesn't get an & because I'm not modifying it
         drawScreen(player, shots, enemies, enemyRows, enemyCols, formationY, formationX, score);
-        char input; // note that making the program not require an Enter press after each input is advanced
-        scanf(" %c", &input); // note that the space in " %c" ignores the newline, and there's a lot of newline
-        inputHandling(input, &player, &shots, &running);
+        if(_kbhit()){ // if a key is presssed, process input, else continue
+            char input=_getch(); 
+            inputHandling(input, &player, &shots, &running);
+        }
         updateExplosions(enemies, enemyRows, enemyCols);
         if((formationY+enemyRows) >= player.y){ // <= and >= instead of == are defense against bugs, call order errors, and timing errors
             running=0;
         }
+        Sleep(30); // loop pause in milliseconds
     }
     // End
     for(int i=0; i<enemyRows; i++){

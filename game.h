@@ -29,8 +29,13 @@ typedef struct{
     int explosionTimer;
 }Enemy;
 
+typedef struct{
+    int enemyFormation;
+    int shotFrameskip;
+}MovementTimers;
+
 void initializeLevel(Player *player, Enemy **enemies, int enemyRows, int enemyCols);
-void moveEnemies(Enemy **enemies, int enemyRows, int enemyCols, int *formationX, int *formationY, int *enemyDirection);
+void moveEnemies(Enemy **enemies, int enemyRows, int enemyCols, int *formationX, int *formationY, int *enemyDirection, MovementTimers *timers);
 void shootPlayer(PlayerProjectile **shots, Player player);
 void moveProjectiles(PlayerProjectile **shots);
 void verifyCollisions(PlayerProjectile **shots, Enemy **enemies, int enemyRows, int enemyCols, int formationY, int formationX, int *score);

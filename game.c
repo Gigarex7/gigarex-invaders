@@ -19,10 +19,13 @@ void initializeLevel(Player *player, Enemy **enemies, int enemyRows, int enemyCo
     /* TEMPORARY: Hardcoded Enemies | END */
 }
 
-void moveEnemies(Enemy **enemies, int enemyRows, int enemyCols, int *formationX, int *formationY, int *enemyDirection){
+void moveEnemies(Enemy **enemies, int enemyRows, int enemyCols, int *formationX, int *formationY, int *enemyDirection, MovementTimers *timers){
     int hitWall=0;
     for(int y=0; y<enemyRows; y++){
         for(int x=0; x<enemyCols; x++){
+            if(enemies[y][x].exploding){
+                timers->enemyFormation=0; // enemy elimination pause
+            }
             if(enemies[y][x].active){
                 int enemyWallX=(*formationX+(x*4)); // (x*4)=spacing
                 // <= and >= instead of == are defense against bugs, call order errors, and timing errors
@@ -37,6 +40,7 @@ void moveEnemies(Enemy **enemies, int enemyRows, int enemyCols, int *formationX,
         }
     }
     if(hitWall){
+        timers->enemyFormation=0; // wall bump pause
         *formationY+=1;
         *enemyDirection*=-1; // multiplying 1 by -1 is perfect for switching between them
     }else{
