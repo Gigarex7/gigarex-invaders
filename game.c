@@ -210,3 +210,28 @@ void inputHandling(char input, Player *player, PlayerProjectile **shots, int *ru
         *running=0;
     }
 }
+
+int formationEliminated(Enemy **enemies, int enemyRows, int enemyCols){
+    for(int y=0; y<enemyRows; y++){
+        for(int x=0; x<enemyCols; x++){
+            if(enemies[y][x].active){
+                return 0; // enemies still active
+            }
+        }
+    }
+    return 1; // all enemies eliminated
+}
+
+void drawScreenEnd(GameState gameState, int score){
+    printf("\033[H"); // ANSI-CSI: move cursor to top left corner
+    if(gameState==WON){
+        printf("\n");
+        printf("    YOU WIN!\n");
+    }
+    else if(gameState==LOST){
+        printf("\n");
+        printf("    GAME OVER\n");
+    }
+    printf("\n");
+    printf("FINAL SCORE: %d\n", score);
+}

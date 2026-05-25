@@ -6,6 +6,10 @@
 #define WIDTH 40
 #define HEIGHT 20
 
+typedef enum{
+    PLAYING, WON, LOST
+}GameState;
+
 typedef struct{
     int x;
     int y;
@@ -42,5 +46,7 @@ void verifyCollisions(PlayerProjectile **shots, Enemy **enemies, int enemyRows, 
 void drawScreen(Player player, PlayerProjectile *shots, Enemy **enemies, int enemyRows, int enemyCols, int formationY, int formationX, int score);
 void inputHandling(char input, Player *player, PlayerProjectile **shots, int *running);
 void updateExplosions(Enemy **enemies, int enemyRows, int enemyCols);
+int formationEliminated(Enemy **enemies, int enemyRows, int enemyCols);
+void drawScreenEnd(GameState gameState, int score);
 
 #endif

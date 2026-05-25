@@ -32,6 +32,7 @@ int main(){
     /* TEMPORARY: Hardcoded Enemies | END */
     // Game Loop
     int running=1;
+    GameState gameState=PLAYING;
     system("cls");
     while(running){ // note that "==1" is superfluous here because running already "=1"
         timers.enemyFormation++;
@@ -47,6 +48,10 @@ int main(){
             timers.shotFrameskip=0;
         }
         verifyCollisions(&shots, enemies, enemyRows, enemyCols, formationY, formationX, &score); // enemies doesn't get an & because I'm not modifying it
+        if(formationEliminated(enemies, enemyRows, enemyCols)){
+            gameState=WON;
+            running=0;
+        }
         drawScreen(player, shots, enemies, enemyRows, enemyCols, formationY, formationX, score);
         if(_kbhit()){ // if a key is presssed, process input, else continue
             char input=_getch(); 
@@ -54,6 +59,7 @@ int main(){
         }
         updateExplosions(enemies, enemyRows, enemyCols);
         if((formationY+enemyRows) >= player.y){ // <= and >= instead of == are defense against bugs, call order errors, and timing errors
+            gameState=LOST;
             running=0;
         }
         Sleep(30); // loop pause in milliseconds
@@ -64,6 +70,7 @@ int main(){
     }
     free(enemies);
     system("cls");
+    drawScreenEnd(gameState, score);
     printf("EXITING...");
     return 0;
 }
