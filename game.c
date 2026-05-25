@@ -120,8 +120,8 @@ void verifyCollisions(PlayerProjectile **shots, Enemy **enemies, int enemyRows, 
 
 void drawScreen(Player player, PlayerProjectile *shots, Enemy **enemies, int enemyRows, int enemyCols, int formationY, int formationX, int score){
     char screen[HEIGHT][WIDTH];
-    int enemyY=0, enemyX=0;
-    printf("\033[J"); // ANSI-CSI: clear screen
+    char bufferFrame[(HEIGHT*(WIDTH+1))+30]; // each row needs HEIGHT + 1 newline, + 30 is padding just in case
+    int enemyY=0, enemyX=0, bufferPos=0;
     printf("\033[H"); // ANSI-CSI: move cursor to top left corner
     // Initial screen filled with spaces
     for(int y=0; y<HEIGHT; y++){
@@ -164,14 +164,18 @@ void drawScreen(Player player, PlayerProjectile *shots, Enemy **enemies, int ene
         }
     }
     /* WORK IN PROGRESS: Enemies drawn over spaces | END */
-    // Print complete frame
+    // Copy each character into one continous string, add stuff, print
     for(int y=0; y<HEIGHT; y++){
         for(int x=0; x<WIDTH; x++){
-            printf("%c", screen[y][x]);
+            bufferFrame[bufferPos]=screen[y][x];
+            bufferPos++;
         }
-        printf("\n");
+        bufferFrame[bufferPos]='\n';
+        bufferPos++;
     }
-    printf("SCORE: %d\n", score);
+    bufferPos+=sprintf(&bufferFrame[bufferPos], "SCORE: %d\n", score); // sprintf is specifically for buffers
+    bufferFrame[bufferPos]='\0'; // '\0' determines the end of the string in C
+    printf("%s", bufferFrame);
 }
 
 // This function ensures EXPLOSIONS render correctly instead of lingering or disappearing too early
