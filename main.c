@@ -14,22 +14,13 @@ int main(){
     Player player;
     PlayerProjectile *shots=NULL;
     MovementTimers timers={0}; // I initialized all timers in 0
-    int score=0;
-    /* TEMPORARY (?): Formation Position | START */
-    int formationY=2;
-    int formationX=5;
-    int enemyDirection=1; // 1=right, -1=left
-    /* TEMPORARY (?): Formation Position | END*/
-    /* TEMPORARY: Hardcoded Enemies | START */
+    LevelConfig level;
     Enemy **enemies;
-    int enemyRows=3;
-    int enemyCols=8;
-    enemies=malloc(enemyRows*sizeof(Enemy*)); // note to self: think of this as [pointer] [pointer] [pointer]
-    for(int i=0; i<enemyRows; i++){
-        enemies[i]=malloc(enemyCols*sizeof(Enemy)); // note to self: think of this as [struct] [struct] [struct] [struct]
+    int score=0;
+    if(!initializeLevel("level.txt", &player, &enemies, &level)){
+        printf("ERROR: File 'level.txt' is inaccessible.\n");
+        return 1; // force stop due to error
     }
-    initializeLevel(&player, enemies, enemyRows, enemyCols);
-    /* TEMPORARY: Hardcoded Enemies | END */
     // Game Loop
     int running=1;
     GameState gameState=PLAYING;
@@ -37,8 +28,8 @@ int main(){
     while(running){ // note that "==1" is superfluous here because running already "=1"
         timers.enemyFormation++;
         // <= and >= instead of == are defense against bugs, call order errors, and timing errors
-        if((timers.enemyFormation)>=10){ // this serves to slow down the game to a playable level
-            moveEnemies(enemies, enemyRows, enemyCols, &formationX, &formationY, &enemyDirection, &timers);
+        if((timers.enemyFormation)>=level.enemySpeed){ // this serves to slow down the game to a playable level
+            moveEnemies(enemies, &level, &timers);
             timers.enemyFormation=0;
         }
         timers.shotFrameskip++;
@@ -47,25 +38,25 @@ int main(){
             moveProjectiles(&shots);
             timers.shotFrameskip=0;
         }
-        verifyCollisions(&shots, enemies, enemyRows, enemyCols, formationY, formationX, &score); // enemies doesn't get an & because I'm not modifying it
-        if(formationEliminated(enemies, enemyRows, enemyCols)){
+        verifyCollisions(&shots, enemies, level, &score); // enemies doesn't get an & because I'm not modifying it
+        if(formationEliminated(enemies, level)){
             gameState=WON;
             running=0;
         }
-        drawScreen(player, shots, enemies, enemyRows, enemyCols, formationY, formationX, score);
+        drawScreen(player, shots, enemies, &level, score);
         if(_kbhit()){ // if a key is presssed, process input, else continue
             char input=_getch(); 
             inputHandling(input, &player, &shots, &running);
         }
-        updateExplosions(enemies, enemyRows, enemyCols);
-        if((formationY+enemyRows) >= player.y){ // <= and >= instead of == are defense against bugs, call order errors, and timing errors
+        updateExplosions(enemies, level);
+        if(((level.formationY) + (level.enemyRows)) >= player.y){ // <= and >= instead of == are defense against bugs, call order errors, and timing errors
             gameState=LOST;
             running=0;
         }
         Sleep(30); // loop pause in milliseconds
     }
     // End
-    for(int i=0; i<enemyRows; i++){
+    for(int i=0; i<level.enemyRows; i++){
         free(enemies[i]);
     }
     free(enemies);

@@ -11,6 +11,21 @@ typedef enum{
 }GameState;
 
 typedef struct{
+    // Configurable
+    int enemyRows; // default 3
+    int enemyCols; // default 8
+    int formationY; // default 2
+    int formationX; // default 5
+    int enemyDirection;  // default 1, 1=right, -1=left
+    int enemySpeed; // default 10
+    // Internal Setup
+    char enemySymbol;
+    char enemyChar;
+    int enemyType;
+    int enemyPoints;
+}LevelConfig;
+
+typedef struct{
     int x;
     int y;
 }Player;
@@ -38,15 +53,15 @@ typedef struct{
     int shotFrameskip;
 }MovementTimers;
 
-void initializeLevel(Player *player, Enemy **enemies, int enemyRows, int enemyCols);
-void moveEnemies(Enemy **enemies, int enemyRows, int enemyCols, int *formationX, int *formationY, int *enemyDirection, MovementTimers *timers);
+int initializeLevel(const char *filename, Player *player, Enemy ***enemies, LevelConfig *level);
+void moveEnemies(Enemy **enemies, LevelConfig *level, MovementTimers *timers);
 void shootPlayer(PlayerProjectile **shots, Player player);
 void moveProjectiles(PlayerProjectile **shots);
-void verifyCollisions(PlayerProjectile **shots, Enemy **enemies, int enemyRows, int enemyCols, int formationY, int formationX, int *score);
-void drawScreen(Player player, PlayerProjectile *shots, Enemy **enemies, int enemyRows, int enemyCols, int formationY, int formationX, int score);
+void verifyCollisions(PlayerProjectile **shots, Enemy **enemies, LevelConfig level, int *score);
+void drawScreen(Player player, PlayerProjectile *shots, Enemy **enemies, LevelConfig *level, int score);
 void inputHandling(char input, Player *player, PlayerProjectile **shots, int *running);
-void updateExplosions(Enemy **enemies, int enemyRows, int enemyCols);
-int formationEliminated(Enemy **enemies, int enemyRows, int enemyCols);
+void updateExplosions(Enemy **enemies, LevelConfig level);
+int formationEliminated(Enemy **enemies, LevelConfig level);
 void drawScreenEnd(GameState gameState, int score);
 
 #endif

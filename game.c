@@ -3,37 +3,59 @@
 #include <stdlib.h>
 #include "game.h"
 
-void initializeLevel(Player *player, Enemy **enemies, int enemyRows, int enemyCols){
+int initializeLevel(const char *filename, Player *player, Enemy ***enemies, LevelConfig *level){
     player->x=WIDTH/2; // middle
     player->y=HEIGHT-2; // bottom
-    /* TEMPORARY: Hardcoded Enemies | START */
-    for(int y=0; y<enemyRows; y++){
-        for(int x=0; x<enemyCols; x++){
-            enemies[y][x].type=ENEMY_NORMAL;
-            enemies[y][x].points=100;
-            enemies[y][x].active=1;
-            enemies[y][x].exploding=0;
-            enemies[y][x].explosionTimer=0;
+    FILE *file=fopen(filename, "r");
+    if(file==NULL){
+        return 0; // signal that it errored out
+    }
+    fscanf(file, "%d %d", &level->enemyRows, &level->enemyCols);
+    fscanf(file, "%d %d", &level->formationY, &level->formationX);
+    fscanf(file, "%d", &level->enemyDirection);
+    fscanf(file, "%d", &level->enemySpeed);
+    *enemies=malloc(level->enemyRows*sizeof(Enemy*)); // note to self: think of this as [pointer] [pointer] [pointer]
+    for(int i=0; i<level->enemyRows; i++){
+        (*enemies)[i]=malloc(level->enemyCols*sizeof(Enemy)); // note to self: think of this as [struct] [struct] [struct] [struct]
+    }
+    for(int y=0; y<level->enemyRows; y++){
+        for(int x=0; x<level->enemyCols; x++){
+            fscanf(file, " %c %d", &level->enemySymbol, &level->enemyPoints);
+            if(level->enemySymbol=='W'){
+                level->enemyType=ENEMY_WEAK;
+            }else if(level->enemySymbol=='N'){
+                level->enemyType=ENEMY_NORMAL;
+            }else if(level->enemySymbol=='S'){
+                level->enemyType=ENEMY_STRONG;
+            }else{
+                level->enemyType=ENEMY_NONE;
+            }
+            (*enemies)[y][x].type=level->enemyType;
+            (*enemies)[y][x].points=level->enemyPoints;
+            (*enemies)[y][x].active=(level->enemyType!=ENEMY_NONE); // yes [1], while not nonexistent
+            (*enemies)[y][x].exploding=0;
+            (*enemies)[y][x].explosionTimer=0;
         }
     }
-    /* TEMPORARY: Hardcoded Enemies | END */
+    fclose(file);
+    return 1; // signal that it went through
 }
 
-void moveEnemies(Enemy **enemies, int enemyRows, int enemyCols, int *formationX, int *formationY, int *enemyDirection, MovementTimers *timers){
+void moveEnemies(Enemy **enemies, LevelConfig *level, MovementTimers *timers){
     int hitWall=0;
-    for(int y=0; y<enemyRows; y++){
-        for(int x=0; x<enemyCols; x++){
+    for(int y=0; y<level->enemyRows; y++){
+        for(int x=0; x<level->enemyCols; x++){
             if(enemies[y][x].exploding){
                 timers->enemyFormation=0; // enemy elimination pause
             }
             if(enemies[y][x].active){
-                int enemyWallX=(*formationX+(x*4)); // (x*4)=spacing
+                int enemyWallX=((level->formationX) + (x*4)); // (x*4)=spacing
                 // <= and >= instead of == are defense against bugs, call order errors, and timing errors
-                if((*enemyDirection==1) && ((enemyWallX) >= (WIDTH-2))){ // (WIDTH-2) is the right margin
+                if((level->enemyDirection==1) && ((enemyWallX) >= (WIDTH-2))){ // (WIDTH-2) is the right margin
                     hitWall=1;
                 }
                 // <= and >= instead of == are defense against bugs, call order errors, and timing errors
-                if((*enemyDirection==-1) && (enemyWallX<=1)){ // (enemyX<=1) is the left margin
+                if((level->enemyDirection==-1) && (enemyWallX<=1)){ // (enemyWallX<=1) is the left margin
                     hitWall=1;
                 }
             }
@@ -41,10 +63,10 @@ void moveEnemies(Enemy **enemies, int enemyRows, int enemyCols, int *formationX,
     }
     if(hitWall){
         timers->enemyFormation=0; // wall bump pause
-        *formationY+=1;
-        *enemyDirection*=-1; // multiplying 1 by -1 is perfect for switching between them
+        level->formationY+=1;
+        level->enemyDirection*=-1; // multiplying 1 by -1 is perfect for switching between them
     }else{
-        *formationX+=*enemyDirection;
+        level->formationX+=level->enemyDirection;
     }
 }
 
@@ -77,17 +99,17 @@ void moveProjectiles(PlayerProjectile **shots){
     }
 }
 
-void verifyCollisions(PlayerProjectile **shots, Enemy **enemies, int enemyRows, int enemyCols, int formationY, int formationX, int *score){
+void verifyCollisions(PlayerProjectile **shots, Enemy **enemies, LevelConfig level, int *score){
     PlayerProjectile *current=*shots;
     PlayerProjectile *previous=NULL;
     int screenY=0, screenX=0;
     while(current!=NULL){
         int projectileDeleted=0; // nested loops are the enemy of progress I read
-        for(int y=0; y<enemyRows; y++){
-            for(int x=0; x<enemyCols; x++){
+        for(int y=0; y<level.enemyRows; y++){
+            for(int x=0; x<level.enemyCols; x++){
                 if(enemies[y][x].active){
-                    screenY=(y+formationY); // (y+a): vertical margin (formationY=2)
-                    screenX=((x*4)+formationX); // (x*a)+b: spacing + horizontal margin (formationX=5)
+                    screenY=(y+(level.formationY)); // (y+a): vertical margin
+                    screenX=((x*4) + (level.formationX)); // (x*a)+b: spacing + horizontal margin
                     if(((current->y)==(screenY)) && ((current->x)==(screenX))){
                         enemies[y][x].exploding=1;
                         enemies[y][x].explosionTimer=1;
@@ -118,7 +140,7 @@ void verifyCollisions(PlayerProjectile **shots, Enemy **enemies, int enemyRows, 
     }
 }
 
-void drawScreen(Player player, PlayerProjectile *shots, Enemy **enemies, int enemyRows, int enemyCols, int formationY, int formationX, int score){
+void drawScreen(Player player, PlayerProjectile *shots, Enemy **enemies, LevelConfig *level, int score){
     char screen[HEIGHT][WIDTH];
     char bufferFrame[(HEIGHT*(WIDTH+1))+30]; // each row needs HEIGHT + 1 newline, + 30 is padding just in case
     int enemyY=0, enemyX=0, bufferPos=0;
@@ -150,16 +172,23 @@ void drawScreen(Player player, PlayerProjectile *shots, Enemy **enemies, int ene
         current=(current->next);
     }
     /* WORK IN PROGRESS: Enemies drawn over spaces | START */
-    for(int y=0; y<enemyRows; y++){
-        for(int x=0; x<enemyCols; x++){
+    for(int y=0; y<level->enemyRows; y++){
+        for(int x=0; x<level->enemyCols; x++){
             if(enemies[y][x].exploding){ // here I don't deactivate the enemy because that's not what this function's role is
-                enemyY=(y+formationY); // (y+a): vertical margin (formationY=2)
-                enemyX=((x*4)+formationX); // (x*a)+b: spacing + horizontal margin (formationX=5)
+                enemyY=(y+(level->formationY)); // (y+a): vertical margin
+                enemyX=((x*4) + (level->formationX)); // (x*a)+b: spacing + horizontal margin
                 screen[enemyY][enemyX]='*';
             }else if(enemies[y][x].active){
-                enemyY=(y+formationY); // (y+a): vertical margin (formationY=2)
-                enemyX=((x*4)+formationX); // (x*a)+b: spacing + horizontal margin (formationX=5)
-                screen[enemyY][enemyX]='M';
+                enemyY=(y+(level->formationY)); // (y+a): vertical margin
+                enemyX=((x*4) + (level->formationX)); // (x*a)+b: spacing + horizontal margin
+                if(enemies[y][x].type==ENEMY_WEAK){
+                    level->enemyChar='V';
+                }else if(enemies[y][x].type==ENEMY_NORMAL){
+                    level->enemyChar='M';
+                }else{
+                    level->enemyChar='W';
+                }
+                screen[enemyY][enemyX]=level->enemyChar;
             }
         }
     }
@@ -179,9 +208,9 @@ void drawScreen(Player player, PlayerProjectile *shots, Enemy **enemies, int ene
 }
 
 // This function ensures EXPLOSIONS render correctly instead of lingering or disappearing too early
-void updateExplosions(Enemy **enemies, int enemyRows, int enemyCols){
-    for(int y=0; y<enemyRows; y++){
-        for(int x=0; x<enemyCols; x++){
+void updateExplosions(Enemy **enemies, LevelConfig level){
+    for(int y=0; y<level.enemyRows; y++){
+        for(int x=0; x<level.enemyCols; x++){
             if(enemies[y][x].exploding){
                 enemies[y][x].explosionTimer--;
                 if(enemies[y][x].explosionTimer<=0){ // <= and >= instead of == are defense against bugs, call order errors, and timing errors
@@ -211,9 +240,9 @@ void inputHandling(char input, Player *player, PlayerProjectile **shots, int *ru
     }
 }
 
-int formationEliminated(Enemy **enemies, int enemyRows, int enemyCols){
-    for(int y=0; y<enemyRows; y++){
-        for(int x=0; x<enemyCols; x++){
+int formationEliminated(Enemy **enemies, LevelConfig level){
+    for(int y=0; y<level.enemyRows; y++){
+        for(int x=0; x<level.enemyCols; x++){
             if(enemies[y][x].active){
                 return 0; // enemies still active
             }
