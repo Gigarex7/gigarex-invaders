@@ -20,19 +20,19 @@ int main(){
     Enemy **enemies;
     int score=0;
     // Load Level
-    if(!initializeLevel("level.txt", &player, &enemies, &level)){
+    if(!initializeLevel(&player, &enemies, &level, "level.txt")){
         printf("ERROR: File 'level.txt' is inaccessible.\n");
         return 1; // force stop due to error
     }
     int running=1;
-    GameState gameState=PLAYING;
-    system("cls");
+    GameState gameState=START;
+    drawScreenStartEnd(gameState, score);
     // Game Loop
     while(running){ // note that "==1" is superfluous here because running already "=1"
         timers.enemyFormation++;
         // <= and >= instead of == are defense against bugs, call order errors, and timing errors
         if((timers.enemyFormation)>=level.enemySpeed){ // this serves to slow down the game to a playable level
-            moveEnemies(enemies, &level, &timers);
+            moveEnemies(enemies, &timers, &level);
             timers.enemyFormation=0;
         }
         timers.shotFrameskip++;
@@ -49,10 +49,11 @@ int main(){
         drawScreen(player, shots, enemies, &level, score);
         if(_kbhit()){ // if a key is presssed, process input, else continue
             char input=_getch(); 
-            inputHandling(input, &player, &shots, &running);
+            inputHandling(&player, &shots, &gameState, &running, input);
         }
         updateExplosions(enemies, level);
-        if(((level.formationY) + (level.enemyRows)) >= player.y){ // <= and >= instead of == are defense against bugs, call order errors, and timing errors
+        // <= and >= instead of == are defense against bugs, call order errors, and timing errors
+        if(((level.formationY) + (level.enemyRows)) >= player.y){
             gameState=LOST;
             running=0;
         }
@@ -64,8 +65,6 @@ int main(){
     }
     free(enemies);
     // End Game
-    system("cls");
-    drawScreenEnd(gameState, score);
-    printf("EXITING...");
+    drawScreenStartEnd(gameState, score);
     return 0;
 }

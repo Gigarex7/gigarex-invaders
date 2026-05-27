@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "game.h"
 
-int initializeLevel(const char *filename, Player *player, Enemy ***enemies, LevelConfig *level){
+int initializeLevel(Player *player, Enemy ***enemies, LevelConfig *level, const char *filename){
     player->x=WIDTH/2; // middle
     player->y=HEIGHT-2; // bottom
     FILE *file=fopen(filename, "r");
@@ -41,7 +41,7 @@ int initializeLevel(const char *filename, Player *player, Enemy ***enemies, Leve
     return 1; // signal that it went through
 }
 
-void moveEnemies(Enemy **enemies, LevelConfig *level, MovementTimers *timers){
+void moveEnemies(Enemy **enemies, MovementTimers *timers, LevelConfig *level){
     int hitWall=0;
     for(int y=0; y<level->enemyRows; y++){
         for(int x=0; x<level->enemyCols; x++){
@@ -70,7 +70,7 @@ void moveEnemies(Enemy **enemies, LevelConfig *level, MovementTimers *timers){
     }
 }
 
-void shootPlayer(PlayerProjectile **shots, Player player){
+void shootPlayer(Player player, PlayerProjectile **shots){
     PlayerProjectile *newProjectile=malloc(sizeof(PlayerProjectile));
     newProjectile->x=player.x;
     newProjectile->y=(player.y-1);
@@ -220,7 +220,7 @@ void updateExplosions(Enemy **enemies, LevelConfig level){
     }
 }
 
-void inputHandling(char input, Player *player, PlayerProjectile **shots, int *running){
+void inputHandling(Player *player, PlayerProjectile **shots, GameState *gameState, int *running, char input){
     // Left
     if((input=='a' || input=='A') && ((player->x) > 1)){
         player->x--;
@@ -231,10 +231,11 @@ void inputHandling(char input, Player *player, PlayerProjectile **shots, int *ru
     }
     // Shoot
     if((input=='s' || input=='S')){
-        shootPlayer(shots, *player);
+        shootPlayer(*player, shots);
     }
     // Quit
     if(input=='q' || input=='Q'){
+        gameState==LOST;
         *running=0;
     }
 }
@@ -262,7 +263,7 @@ void scoreHandling(int score){
         }
         fclose(scoreFile);
     }
-    // START: drawScreenEnd Integration
+    // START: drawScreenStart-End Integration
         // Visual: Ask For Name
         printf("ENTER YOUR NAME: ");
         scanf("%3s", scores[scoreCount].name); // "%3s" is insurance against overflow
@@ -289,21 +290,36 @@ void scoreHandling(int score){
             fclose(scoreFile);
         }
         // Visual: Display Scores
-        printf("\n\tHIGH SCORES\n");
+        printf("|             HIGH SCORES:             |\n");
         for(int k=0; k<scoreCount; k++){
             printf("%d\t%s\t%d\n", k+1, scores[k].name, scores[k].highScore);
         }
-    // END: drawScreenEnd Integration
+    // END: drawScreenStart-End Integration
 }
 
-void drawScreenEnd(GameState gameState, int score){
+void drawScreenStartEnd(GameState gameState, int score){
+    system("cls");
     printf("\033[H"); // ANSI-CSI: move cursor to top left corner
-    if(gameState==WON){
-        printf("\n\tYOU WIN!\n");
+    printf("+--------------------------------------+\n");
+    printf("|                                      |\n");
+    printf("|           GIGAREX INVADERS           |\n");
+    printf("|                                      |\n");
+    if(gameState==START){
+        printf("|        PRESS SPACEBAR TO PLAY        |\n");
+    }else if(gameState==WON){
+        printf("|              YOU WIN!                |\n");
+    }else{
+        printf("|             GAME OVER!               |\n");
     }
-    else if(gameState==LOST){
-        printf("\n\tGAME OVER\n");
+    if(gameState==START){
+        printf("|                                      |\n");
+    }else{
+        printf("|           FINAL SCORE: %-6d          |\n", score);
     }
-    printf("\nFINAL SCORE: %d\n", score);
+    printf("|                                      |\n");
     scoreHandling(score);
+    printf("|                                      |\n");
+    printf("|                                      |\n");
+    printf("|                                      |\n");
+    printf("+--------------------------------------+\n");
 }

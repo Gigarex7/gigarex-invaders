@@ -2,12 +2,15 @@
 #ifndef GAME_H
 #define GAME_H
 
-// Screen
+// Screen Parameters
+
 #define WIDTH 40
 #define HEIGHT 20
 
+// Structures
+
 typedef enum{
-    PLAYING, WON, LOST
+    START, PLAYING, WON, LOST
 }GameState;
 
 typedef struct{
@@ -58,16 +61,18 @@ typedef struct{
     int shotFrameskip;
 }MovementTimers;
 
-int initializeLevel(const char *filename, Player *player, Enemy ***enemies, LevelConfig *level);
-void moveEnemies(Enemy **enemies, LevelConfig *level, MovementTimers *timers);
-void shootPlayer(PlayerProjectile **shots, Player player);
+// Prototypes
+
+int initializeLevel(Player *player, Enemy ***enemies, LevelConfig *level, const char *filename);
+void moveEnemies(Enemy **enemies, MovementTimers *timers, LevelConfig *level);
+void shootPlayer(Player player, PlayerProjectile **shots);
 void moveProjectiles(PlayerProjectile **shots);
 void verifyCollisions(PlayerProjectile **shots, Enemy **enemies, LevelConfig level, int *score);
 void drawScreen(Player player, PlayerProjectile *shots, Enemy **enemies, LevelConfig *level, int score);
-void inputHandling(char input, Player *player, PlayerProjectile **shots, int *running);
+void inputHandling(Player *player, PlayerProjectile **shots, GameState *gameState, int *running, char input);
 void updateExplosions(Enemy **enemies, LevelConfig level);
 int formationEliminated(Enemy **enemies, LevelConfig level);
 void scoreHandling(int score);
-void drawScreenEnd(GameState gameState, int score);
+void drawScreenStartEnd(GameState gameState, int score);
 
 #endif
