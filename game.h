@@ -26,6 +26,11 @@ typedef struct{
 }LevelConfig;
 
 typedef struct{
+    char name[4];
+    int highScore;
+}HighScore;
+
+typedef struct{
     int x;
     int y;
 }Player;
@@ -62,6 +67,7 @@ void drawScreen(Player player, PlayerProjectile *shots, Enemy **enemies, LevelCo
 void inputHandling(char input, Player *player, PlayerProjectile **shots, int *running);
 void updateExplosions(Enemy **enemies, LevelConfig level);
 int formationEliminated(Enemy **enemies, LevelConfig level);
+void scoreHandling(int score);
 void drawScreenEnd(GameState gameState, int score);
 
 #endif

@@ -171,7 +171,7 @@ void drawScreen(Player player, PlayerProjectile *shots, Enemy **enemies, LevelCo
         screen[current->y][current->x]='.';
         current=(current->next);
     }
-    /* WORK IN PROGRESS: Enemies drawn over spaces | START */
+    // Enemies drawn over spaces
     for(int y=0; y<level->enemyRows; y++){
         for(int x=0; x<level->enemyCols; x++){
             if(enemies[y][x].exploding){ // here I don't deactivate the enemy because that's not what this function's role is
@@ -192,7 +192,6 @@ void drawScreen(Player player, PlayerProjectile *shots, Enemy **enemies, LevelCo
             }
         }
     }
-    /* WORK IN PROGRESS: Enemies drawn over spaces | END */
     // Copy each character into one continous string, add stuff, print
     for(int y=0; y<HEIGHT; y++){
         for(int x=0; x<WIDTH; x++){
@@ -203,7 +202,7 @@ void drawScreen(Player player, PlayerProjectile *shots, Enemy **enemies, LevelCo
         bufferPos++;
     }
     bufferPos+=sprintf(&bufferFrame[bufferPos], "SCORE: %d\n", score); // sprintf is specifically for buffers
-    bufferFrame[bufferPos]='\0'; // '\0' determines the end of the string in C
+    bufferFrame[bufferPos]='\0'; // '\0' determines the end of a string in C
     printf("%s", bufferFrame);
 }
 
@@ -251,16 +250,60 @@ int formationEliminated(Enemy **enemies, LevelConfig level){
     return 1; // all enemies eliminated
 }
 
+void scoreHandling(int score){
+    // Variables
+    HighScore scores[5+1]; // I display 5 scores at most, but need to handle an extra one every loop
+    int scoreCount=0;
+    FILE *scoreFile=fopen("scores.dat", "rb");
+    // Acquiring Score Count
+    if(scoreFile!=NULL){
+        while((scoreCount<5) && fread(&scores[scoreCount], sizeof(HighScore), 1, scoreFile)){
+            scoreCount++;
+        }
+        fclose(scoreFile);
+    }
+    // START: drawScreenEnd Integration
+        // Visual: Ask For Name
+        printf("ENTER YOUR NAME: ");
+        scanf("%3s", scores[scoreCount].name); // "%3s" is insurance against overflow
+        scores[scoreCount].name[3]='\0'; // '\0' determines the end of a string in C
+        scores[scoreCount].highScore=score;
+        scoreCount++;
+        // Backend: (Bubble) Sort Scores
+        for(int i=0; i<(scoreCount-1); i++){ // passes through the array, at most 5 times, so 0 1 2 3 4; 4=5-1, scoreCount will be 5
+            for(int j=0; j<((scoreCount-1)-i); j++){ // passes through neighboring pairs, "0 1" "1 2", so less checks, thus -i
+                if((scores[j].highScore) < (scores[j+1].highScore)){ // is the first score smaller than the second? yes? swap
+                    HighScore auxStruct=scores[j]; // "hold onto box A"
+                    scores[j]=scores[j+1]; // "put box B in place of box A"
+                    scores[j+1]=auxStruct; // "put box A in place of box B"
+                }
+            }
+        }
+        // Backend: Rewriting File
+        if(scoreCount>5){
+            scoreCount=5; // only five high scores
+        }
+        scoreFile=fopen("scores.dat", "wb");
+        if(scoreFile!=NULL){
+            fwrite(scores, sizeof(HighScore), scoreCount, scoreFile);
+            fclose(scoreFile);
+        }
+        // Visual: Display Scores
+        printf("\n\tHIGH SCORES\n");
+        for(int k=0; k<scoreCount; k++){
+            printf("%d\t%s\t%d\n", k+1, scores[k].name, scores[k].highScore);
+        }
+    // END: drawScreenEnd Integration
+}
+
 void drawScreenEnd(GameState gameState, int score){
     printf("\033[H"); // ANSI-CSI: move cursor to top left corner
     if(gameState==WON){
-        printf("\n");
-        printf("    YOU WIN!\n");
+        printf("\n\tYOU WIN!\n");
     }
     else if(gameState==LOST){
-        printf("\n");
-        printf("    GAME OVER\n");
+        printf("\n\tGAME OVER\n");
     }
-    printf("\n");
-    printf("FINAL SCORE: %d\n", score);
+    printf("\nFINAL SCORE: %d\n", score);
+    scoreHandling(score);
 }

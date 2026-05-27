@@ -4,6 +4,7 @@ Space Invaders (terminal version)
 Copyright (C) 2026 Gigarex7
 */
 
+// Libraries
 #include <stdio.h>
 #include <stdlib.h>
 #include <conio.h> // really old Windows-specific library that enables real-time input and rendering here
@@ -11,20 +12,22 @@ Copyright (C) 2026 Gigarex7
 #include "game.h"
 
 int main(){
+    // Main Variables
     Player player;
     PlayerProjectile *shots=NULL;
     MovementTimers timers={0}; // I initialized all timers in 0
     LevelConfig level;
     Enemy **enemies;
     int score=0;
+    // Load Level
     if(!initializeLevel("level.txt", &player, &enemies, &level)){
         printf("ERROR: File 'level.txt' is inaccessible.\n");
         return 1; // force stop due to error
     }
-    // Game Loop
     int running=1;
     GameState gameState=PLAYING;
     system("cls");
+    // Game Loop
     while(running){ // note that "==1" is superfluous here because running already "=1"
         timers.enemyFormation++;
         // <= and >= instead of == are defense against bugs, call order errors, and timing errors
@@ -55,11 +58,12 @@ int main(){
         }
         Sleep(30); // loop pause in milliseconds
     }
-    // End
+    // Cleanup
     for(int i=0; i<level.enemyRows; i++){
         free(enemies[i]);
     }
     free(enemies);
+    // End Game
     system("cls");
     drawScreenEnd(gameState, score);
     printf("EXITING...");
