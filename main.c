@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
-Space Invaders (terminal version)
+Gigarex Invaders
 Copyright (C) 2026 Gigarex7
 */
 
@@ -15,7 +15,7 @@ int main(){
     // Main Variables
     Player player;
     PlayerProjectile *shots=NULL;
-    MovementTimers timers={0}; // I initialized all timers in 0
+    MovementTimers timers={0};
     LevelConfig level;
     Enemy **enemies;
     int score=0;
@@ -24,9 +24,11 @@ int main(){
         printf("ERROR: File 'level.txt' is inaccessible.\n");
         return 1; // force stop due to error
     }
-    int running=1;
+    int running=0;
     GameState gameState=START;
-    drawScreenStartEnd(gameState, score);
+    while(gameState==START){
+        drawScreenStart(&gameState, &running, score);
+    }
     // Game Loop
     while(running){ // note that "==1" is superfluous here because running already "=1"
         timers.enemyFormation++;
@@ -41,14 +43,14 @@ int main(){
             moveProjectiles(&shots);
             timers.shotFrameskip=0;
         }
-        verifyCollisions(&shots, enemies, level, &score); // enemies doesn't get an & because I'm not modifying it
+        verifyCollisions(&shots, enemies, level, &score);
         if(formationEliminated(enemies, level)){
             gameState=WON;
             running=0;
         }
         drawScreen(player, shots, enemies, &level, score);
         if(_kbhit()){ // if a key is presssed, process input, else continue
-            char input=_getch(); 
+            char input=_getch();
             inputHandling(&player, &shots, &gameState, &running, input);
         }
         updateExplosions(enemies, level);
@@ -59,12 +61,11 @@ int main(){
         }
         Sleep(30); // loop pause in milliseconds
     }
-    // Cleanup
+    // End Game & Cleanup
+    drawScreenEnd(gameState, score);
     for(int i=0; i<level.enemyRows; i++){
         free(enemies[i]);
     }
     free(enemies);
-    // End Game
-    drawScreenStartEnd(gameState, score);
     return 0;
 }

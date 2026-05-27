@@ -21,7 +21,7 @@ typedef struct{
     int formationX; // default 5
     int enemyDirection;  // default 1, 1=right, -1=left
     int enemySpeed; // default 10
-    // Internal Setup
+    // Internal
     char enemySymbol;
     char enemyChar;
     int enemyType;
@@ -72,7 +72,8 @@ void drawScreen(Player player, PlayerProjectile *shots, Enemy **enemies, LevelCo
 void inputHandling(Player *player, PlayerProjectile **shots, GameState *gameState, int *running, char input);
 void updateExplosions(Enemy **enemies, LevelConfig level);
 int formationEliminated(Enemy **enemies, LevelConfig level);
-void scoreHandling(int score);
-void drawScreenStartEnd(GameState gameState, int score);
+void scoreHandling(GameState gameState, int score);
+void drawScreenStart(GameState *gameState, int *running, int score);
+void drawScreenEnd(GameState gameState, int score);
 
 #endif

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #include <stdio.h>
 #include <stdlib.h>
+#include <conio.h> // really old Windows-specific library that enables instant input here
 #include "game.h"
 
 int initializeLevel(Player *player, Enemy ***enemies, LevelConfig *level, const char *filename){
@@ -104,7 +105,7 @@ void verifyCollisions(PlayerProjectile **shots, Enemy **enemies, LevelConfig lev
     PlayerProjectile *previous=NULL;
     int screenY=0, screenX=0;
     while(current!=NULL){
-        int projectileDeleted=0; // nested loops are the enemy of progress I read
+        int projectileDeleted=0;
         for(int y=0; y<level.enemyRows; y++){
             for(int x=0; x<level.enemyCols; x++){
                 if(enemies[y][x].active){
@@ -174,7 +175,7 @@ void drawScreen(Player player, PlayerProjectile *shots, Enemy **enemies, LevelCo
     // Enemies drawn over spaces
     for(int y=0; y<level->enemyRows; y++){
         for(int x=0; x<level->enemyCols; x++){
-            if(enemies[y][x].exploding){ // here I don't deactivate the enemy because that's not what this function's role is
+            if(enemies[y][x].exploding){
                 enemyY=(y+(level->formationY)); // (y+a): vertical margin
                 enemyX=((x*4) + (level->formationX)); // (x*a)+b: spacing + horizontal margin
                 screen[enemyY][enemyX]='*';
@@ -212,7 +213,8 @@ void updateExplosions(Enemy **enemies, LevelConfig level){
         for(int x=0; x<level.enemyCols; x++){
             if(enemies[y][x].exploding){
                 enemies[y][x].explosionTimer--;
-                if(enemies[y][x].explosionTimer<=0){ // <= and >= instead of == are defense against bugs, call order errors, and timing errors
+                // <= and >= instead of == are defense against bugs, call order errors, and timing errors
+                if(enemies[y][x].explosionTimer<=0){
                     enemies[y][x].exploding=0;
                 }
             }
@@ -234,8 +236,8 @@ void inputHandling(Player *player, PlayerProjectile **shots, GameState *gameStat
         shootPlayer(*player, shots);
     }
     // Quit
-    if(input=='q' || input=='Q'){
-        gameState==LOST;
+    if((input=='q' || input=='Q')){
+        *gameState=LOST;
         *running=0;
     }
 }
@@ -251,9 +253,9 @@ int formationEliminated(Enemy **enemies, LevelConfig level){
     return 1; // all enemies eliminated
 }
 
-void scoreHandling(int score){
+void scoreHandling(GameState gameState, int score){
     // Variables
-    HighScore scores[5+1]; // I display 5 scores at most, but need to handle an extra one every loop
+    HighScore scores[5+1]; // the program display 5 scores at most, but needs to handle an extra one every loop
     int scoreCount=0;
     FILE *scoreFile=fopen("scores.dat", "rb");
     // Acquiring Score Count
@@ -263,14 +265,14 @@ void scoreHandling(int score){
         }
         fclose(scoreFile);
     }
-    // START: drawScreenStart-End Integration
+    // drawScreenEnd Integration
         // Visual: Ask For Name
         printf("ENTER YOUR NAME: ");
         scanf("%3s", scores[scoreCount].name); // "%3s" is insurance against overflow
         scores[scoreCount].name[3]='\0'; // '\0' determines the end of a string in C
         scores[scoreCount].highScore=score;
         scoreCount++;
-        // Backend: (Bubble) Sort Scores
+        // Internal: (Bubble) Sort Scores
         for(int i=0; i<(scoreCount-1); i++){ // passes through the array, at most 5 times, so 0 1 2 3 4; 4=5-1, scoreCount will be 5
             for(int j=0; j<((scoreCount-1)-i); j++){ // passes through neighboring pairs, "0 1" "1 2", so less checks, thus -i
                 if((scores[j].highScore) < (scores[j+1].highScore)){ // is the first score smaller than the second? yes? swap
@@ -280,7 +282,7 @@ void scoreHandling(int score){
                 }
             }
         }
-        // Backend: Rewriting File
+        // Internal: Rewriting File
         if(scoreCount>5){
             scoreCount=5; // only five high scores
         }
@@ -289,37 +291,88 @@ void scoreHandling(int score){
             fwrite(scores, sizeof(HighScore), scoreCount, scoreFile);
             fclose(scoreFile);
         }
-        // Visual: Display Scores
-        printf("|             HIGH SCORES:             |\n");
-        for(int k=0; k<scoreCount; k++){
-            printf("%d\t%s\t%d\n", k+1, scores[k].name, scores[k].highScore);
-        }
-    // END: drawScreenStart-End Integration
 }
 
-void drawScreenStartEnd(GameState gameState, int score){
+void displayScores(){
+    //Variables
+    HighScore scores[5]; // the program only needs 5 here
+    int scoreCount=0;
+    FILE *scoreFile=fopen("scores.dat", "rb");
+    // Reacquire Score Count
+    while(scoreCount<5 && fread(&scores[scoreCount], sizeof(HighScore), 1, scoreFile)){
+        scoreCount++;
+    }
+    fclose(scoreFile);
+    // Print Screen
+    printf("|             HIGH SCORES:             |\n"); // 9
+    if(scoreCount==5){
+        for(int i=0; i<scoreCount; i++){
+            // %-3s and %-6d ensure alignment
+            printf("|        %d. %-3s ........ %-6d        |\n", i+1, scores[i].name, scores[i].highScore); // 10–14
+        }
+    }else{
+        for(int j=0; j<scoreCount; j++){
+            // %-3s and %-6d ensure alignment
+            printf("|        %d. %-3s ........ %-6d        |\n", j+1, scores[j].name, scores[j].highScore); // 10–13
+        }
+        for(int k=0; k<(5-scoreCount); k++){
+            printf("|                                      |\n"); // 11–14
+        }
+    }
+}
+
+void drawScreenStart(GameState *gameState, int *running, int score){
+    // Print Screen
     system("cls");
     printf("\033[H"); // ANSI-CSI: move cursor to top left corner
-    printf("+--------------------------------------+\n");
-    printf("|                                      |\n");
-    printf("|           GIGAREX INVADERS           |\n");
-    printf("|                                      |\n");
-    if(gameState==START){
-        printf("|        PRESS SPACEBAR TO PLAY        |\n");
-    }else if(gameState==WON){
-        printf("|              YOU WIN!                |\n");
-    }else{
-        printf("|             GAME OVER!               |\n");
+    printf("+--------------------------------------+\n"); // 1
+    printf("|                                      |\n"); // 2
+    printf("|           GIGAREX INVADERS           |\n"); // 3
+    printf("|                                      |\n"); // 4
+    printf("|        PRESS SPACEBAR TO PLAY        |\n"); // 5
+    printf("|                                      |\n"); // 6
+    printf("|                                      |\n"); // 7
+    printf("|                                      |\n"); // 8
+    displayScores(); // 9–14
+    printf("|                                      |\n"); // 15
+    printf("|                                      |\n"); // 16
+    printf("|                                      |\n"); // 17
+    printf("|      Copyright(C) 2026 Gigarex7      |\n"); // 18
+    printf("|                                      |\n"); // 19
+    printf("+--------------------------------------+\n"); // 20
+    // Start
+    if(_kbhit()){
+        char startInput=_getch();
+        if((startInput==' ')){
+            *gameState=PLAYING;
+            *running=1;
+        }
     }
-    if(gameState==START){
-        printf("|                                      |\n");
+}
+
+void drawScreenEnd(GameState gameState, int score){
+    scoreHandling(gameState, score);
+    // Print Screen
+    system("cls");
+    printf("\033[H"); // ANSI-CSI: move cursor to top left corner
+    printf("+--------------------------------------+\n"); // 1
+    printf("|                                      |\n"); // 2
+    printf("|           GIGAREX INVADERS           |\n"); // 3
+    printf("|                                      |\n"); // 4
+    if(gameState==WON){
+        printf("|              YOU WIN!                |\n"); // 5
     }else{
-        printf("|           FINAL SCORE: %-6d          |\n", score);
+        printf("|             GAME OVER!               |\n"); // 5
     }
-    printf("|                                      |\n");
-    scoreHandling(score);
-    printf("|                                      |\n");
-    printf("|                                      |\n");
-    printf("|                                      |\n");
-    printf("+--------------------------------------+\n");
+    printf("|                                      |\n"); // 6
+    // %-4d ensures alignment
+    printf("|           FINAL SCORE: %-4d          |\n", score); // 7
+    printf("|                                      |\n"); // 8
+    displayScores(); // 9–14
+    printf("|                                      |\n"); // 15
+    printf("|                                      |\n"); // 16
+    printf("|                                      |\n"); // 17
+    printf("|      Copyright(C) 2026 Gigarex7      |\n"); // 18
+    printf("|                                      |\n"); // 19
+    printf("+--------------------------------------+\n"); // 20
 }
