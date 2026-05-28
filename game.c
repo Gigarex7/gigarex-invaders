@@ -299,10 +299,12 @@ void displayScores(){
     int scoreCount=0;
     FILE *scoreFile=fopen("scores.dat", "rb");
     // Reacquire Score Count
-    while(scoreCount<5 && fread(&scores[scoreCount], sizeof(HighScore), 1, scoreFile)){
-        scoreCount++;
+    if(scoreFile!=NULL){
+        while(scoreCount<5 && fread(&scores[scoreCount], sizeof(HighScore), 1, scoreFile)){
+            scoreCount++;
+        }
+        fclose(scoreFile);
     }
-    fclose(scoreFile);
     // Print Screen
     printf("|             HIGH SCORES:             |\n"); // 9
     if(scoreCount==5){
