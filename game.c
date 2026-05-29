@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #include <stdio.h>
 #include <stdlib.h>
-#include <conio.h> // really old Windows-specific library that enables instant input here
 #include "game.h"
 
 int initializeLevel(Player *player, Enemy ***enemies, LevelConfig *level, const char *filename){
@@ -331,7 +330,7 @@ void drawScreenStart(GameState *gameState, int *running, int score){
     printf("|                                      |\n"); // 2
     printf("|           GIGAREX INVADERS           |\n"); // 3
     printf("|                                      |\n"); // 4
-    printf("|        PRESS SPACEBAR TO PLAY        |\n"); // 5
+    printf("|      PRESS P AND ENTER TO PLAY!      |\n"); // 5
     printf("|                                      |\n"); // 6
     printf("|                                      |\n"); // 7
     printf("|                                      |\n"); // 8
@@ -343,12 +342,11 @@ void drawScreenStart(GameState *gameState, int *running, int score){
     printf("|                                      |\n"); // 19
     printf("+--------------------------------------+\n"); // 20
     // Start
-    if(_kbhit()){
-        char startInput=_getch();
-        if((startInput==' ')){
-            *gameState=PLAYING;
-            *running=1;
-        }
+    char startInput;
+    scanf(" %c", &startInput); // the space in " %c" is to omit preceding whitespace like newlines
+    if((startInput=='p' || startInput=='P')){
+        *gameState=PLAYING;
+        *running=1;
     }
 }
 
